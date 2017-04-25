@@ -32,20 +32,25 @@ def load_airport_connectivity(dataFile):
         G1.edge[airports_connectivity[0]][airports_connectivity[1]]['weight'] = 0.1
         # Add random weight to the edges
         # TODO: Add weight and other edge properties
-        
-        for airport, degree in degrees.items():
-            weights[airport] = network.out_degree(airport) + \
-                               network.in_degree(airport)
-        targets = list()
-        for ind in range(0, NUM_SIMULATIONS):
+
+        # Generate target-selection weights, and choose target vertices to infect.
+        weights = dict()
+        for ind in range(0, 100):
             target_round = list()
             while len(target_round) < 20:
                 chosen_airport = weighted_random(weights)
                 if chosen_airport not in target_round:
                     target_round.append(chosen_airport)
-            targets.append(target_round)
 
     return G1
+
+def weighted_random(weights):
+    number = random.random() * sum(weights.values())
+    for k, v in weights.items():
+        if number <= v:
+            break
+        number -= v
+    return k
 
 
 def retrieve_infected_nodes(G, attr_name, attr_value):
@@ -119,3 +124,4 @@ if __name__ == "__main__":
     print(get_graph_properties(G1))
     simulate_infection(G1,50,'metrics_files')
     write_graph_in_json(G1, 'flight_sim_data.json')
+
