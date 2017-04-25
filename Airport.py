@@ -32,11 +32,7 @@ def load_airport_connectivity(dataFile):
         G1.edge[airports_connectivity[0]][airports_connectivity[1]]['weight'] = 0.1
         # Add random weight to the edges
         # TODO: Add weight and other edge properties
-
-
-        # Generate target-selection weights, and choose target nodes to infect.
-        degrees = network.degree()
-        weights = dict()
+        
         for airport, degree in degrees.items():
             weights[airport] = network.out_degree(airport) + \
                                network.in_degree(airport)
@@ -48,8 +44,6 @@ def load_airport_connectivity(dataFile):
                 if chosen_airport not in target_round:
                     target_round.append(chosen_airport)
             targets.append(target_round)
-
-
 
     return G1
 
@@ -64,13 +58,27 @@ def get_node_props():
     return node_props
 
 
-def simulate_infection(G, no_of_days, metrics_filename):
+def simulate_infection(G, no_of_days, with_edges, metrics_filename):
     # TODO: Write the simulation logic here. Refer add_nodes_in_timestep()
     print("Simulating the nodes")
     # Here write a for loop to go over the number of days, simulation cycle / steps
     # At each function compute the number iterate over each nodes in the graph
-        # for each node, assess the probabilit of infection based on the incoming edges
+        # for each node, assess the probability of infection based on the incoming edges
         # If infected change their states. i.e update the meta data properties
+    if G.number_of_nodes() > 0 :
+        node_increase = G.number_of_nodes() + 1
+    else :
+        node_increase =0
+    for i in range (node_increase, node_increase + no_of_days) :
+        node_props = get_node_props()
+        G.add_node(i, node_props)
+        s=i
+        if with_edges ==1 :
+
+
+
+
+
     compute_metrics(G,metrics_filename)
 
 def compute_metrics(G, metrics_files):
