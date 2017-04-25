@@ -43,7 +43,7 @@ def load_airport_connectivity(dataFile):
         targets = list()
         for ind in range(0, NUM_SIMULATIONS):
             target_round = list()
-            while len(target_round) < 10:
+            while len(target_round) < 20:
                 chosen_airport = weighted_random(weights)
                 if chosen_airport not in target_round:
                     target_round.append(chosen_airport)
