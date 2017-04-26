@@ -1,15 +1,14 @@
 import networkx as nx
-import os
-import random
 import json
+import random
 import csv
+import os
 import logging as log
 from networkx.readwrite import json_graph
 
 
-
 def load_airport_connectivity(dataFile):
-    print("This function is to load the standford graph dataset and analyze it")
+    print("This function is to load the graph dataset and analyze it")
     G1 = nx.DiGraph()
     # Read the file and create the nodes
     with open(dataFile) as f:
@@ -32,7 +31,6 @@ def load_airport_connectivity(dataFile):
         G1.add_edge(airports_connectivity[0], airports_connectivity[1])
         G1.edge[airports_connectivity[0]][airports_connectivity[1]]['weight'] = 0.1
         # Add random weight to the edges
-        # TODO: Add weight and other edge properties
 
     return G1
 
@@ -49,7 +47,6 @@ def get_node_props():
 
 
 def run_simulation_cycle(G, no_of_days, metrics_filename):
-    # TODO: Write the simulation logic here. Refer add_nodes_in_timestep()
     print("Simulating the nodes")
     # Here write a for loop to go over the number of days, simulation cycle / steps
     # At each function compute the number iterate over each nodes in the graph
@@ -161,7 +158,7 @@ def compute_metrics(G, metrics_files):
     no_of_susceptible_nodes = len(susceptible_nodes)
     cured_nodes = retrieve_infected_nodes(G, "infection_status", "cured")
     no_of_cured_nodes = len(cured_nodes)
-    avg_inbound_edge_weight_infected =  find_avg_edge_weights(G)
+    avg_inbound_edge_weight_infected = find_avg_edge_weights(G)
     print(no_of_susceptible_nodes,no_of_infected_nodes,no_of_cured_nodes,avg_inbound_edge_weight_infected)
     if metrics_files != "":
         # Assume the file exist
@@ -170,13 +167,11 @@ def compute_metrics(G, metrics_files):
         writer.writerow([no_of_susceptible_nodes,no_of_infected_nodes,no_of_cured_nodes, avg_inbound_edge_weight_infected])
         output_file.close()
 
-def get_graph_properties(G):
+def find_graph_properties(G):
     '''
-        Compute the graph properties and return dictionary
-        :param G:  Graph for which the properties needs to be assessed
-        :return: returns a graph properties dictionary
+        We are computing the graph properties and returning to dictionary
     '''
-    # Print the graph properties, to be used for analysis
+    # Printing the graph properties
     print("Analyzing the graph : ")
     graph_properties = {}
     total_no_of_terminals = G.nodes()
@@ -188,7 +183,6 @@ def get_graph_properties(G):
 
     return graph_properties
 
-
 def infect_nodes(G, node_count):
     # Infect the nodes
     rand_nodes = random.sample(G.nodes(), node_count)
@@ -196,21 +190,68 @@ def infect_nodes(G, node_count):
         G.node[j]["infection_status"] = "infected"
         print(j)
 
-
 def write_graph_in_json(G, filename):
     data = json_graph.node_link_data(G)
     f = open(filename, 'w+')
     json.dump(data, f)
+    
+def generate_ErdosRenyiGraph(n, p, seed=None):
+    """
+        This function generates graph of node n with random number of edges, with probability p
 
+        NOTE:This function implementation is inspired from networkx implementaiton nx.gnp_random_graph()and being modified 
+        to cater the needs of this simulation. We are overriding the function, so meta data can be updated.
 
+    """
+    G = nx.DiGraph()
+    # Replace this function with node addition
+    compute_metrics(G, n, 0, 0)
+
+    G.name = "gnp_random_graph(%s,%s)" % (n, p)
+
+    if p <= 0:
+        return G
+
+    if not seed is None:
+        random.seed(seed)
+
+    if G.is_directed():
+        edges = itertools.permutations(range(n), 2)
+    else:
+        edges = itertools.combinations(range(n), 2)
+
+    if p >= 1:
+        G.add_edges_from(edges)
+        return G
+
+    for e in edges:
+        if random.random() < p:
+            # print(e[0],e[1], e)
+            # Updating the meta data, to keep count of number of in bound and outbound edges
+            get_node_props(G, e[0], e[1])
+    if G.number_of_nodes() < 1000:
+        write_graph_in_json(G, 'ErdosRenyi.json')
+    log.info("Number of nodes and edges in Erdos Renyi graph are :%s , %s", G.number_of_nodes(),
+             G.number_of_edges())
+
+    return G
 
 
 if __name__ == "__main__":
-    # To be used if a subset of stanford dataset to be used
     # connectivity = "test.edgelist"
     connectivity = "Airport_Routes_Trimmed.txt"
     G1 = load_airport_connectivity(connectivity)
     infect_nodes(G1, 20)
-    run_simulation_cycle(G1, 50, 'metrics_files.csv')
+    run_simulation_cycle(G1,50, 'metrics_files.csv')
     find_avg_edge_weights(G1)
-
+    
+    run_erdo_simulation = False
+    if run_erdo_simulation == True:
+        # Creating a scalable graph model (Erdos-Renyi) and study the  simulation properties
+        # Set the probability for ErdosRenyi Graph
+        erdos_probability = 0.3
+        G2 = generate_ErdosRenyiGraph(345, erdos_probability)
+        erdos_renyi_graph_properties = find_graph_properties(G2)
+        erdos_metrics_file = 'erdos_renyi_metrics.csv'
+        initialize_csv_file(erdos_metrics_file)
+        run_simulation_cycle(G2, 50, erdos_metrics_file)
